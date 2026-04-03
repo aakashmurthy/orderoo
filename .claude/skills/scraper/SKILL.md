@@ -13,31 +13,53 @@ User will say something like:
 > "Add Costco parser, emails are in email-examples/costco-order.eml and email-examples/costco-cancel.eml"
 
 You will:
-1. Read and analyze each `.eml` file
-2. Generate `electron/parsers/[retailer].ts`
-3. Update `electron/imap.ts` (FROM routing + subject patterns)
-4. Update `src/App.tsx` (SUPPORTED_RETAILERS, RETAILER_LOGOS)
-5. Report what logo file is still needed
+1. Launch one sub-agent **per email file** in parallel to analyze each `.eml`
+2. Synthesize the sub-agent reports into a single parser
+3. Generate `electron/parsers/[retailer].ts`
+4. Update `electron/imap.ts` (FROM routing + subject patterns)
+5. Update `src/App.tsx` (SUPPORTED_RETAILERS, RETAILER_LOGOS)
+6. Report what logo file is still needed
 
 ---
 
 ## Step-by-step instructions
 
-### Step 1 — Read and analyze the email files
+### Step 1 — Launch parallel email analysis sub-agents
 
-Read each provided `.eml` file in full. For each file, extract:
+For each provided `.eml` file, launch a **separate sub-agent** using the Agent tool with `subagent_type="Explore"`. Launch all agents simultaneously in a single message (parallel execution).
 
-- **FROM address** — the full sender address (e.g. `auto-confirm@orders.costco.com`)
-- **SUBJECT line** — used for status detection and routing
-- **Order ID pattern** — how the order number appears in the HTML (label + surrounding markup)
-- **Date pattern** — where the order date appears and how it's formatted
-- **Order total pattern** — class names, surrounding text, or label used
-- **Item structure** — CSS classes, link patterns, image sources, quantity/price layout
-- **Cancellation signals** — subject keywords or body text that indicates a cancelled order
+Each sub-agent prompt should be:
 
-Use `simpleParser` mental model: the email HTML is available as a cheerio-loadable string after parsing. Inspect both the subject and the HTML body for patterns.
+```
+Read the raw email file at [absolute path to .eml file] and extract the following for use in writing a cheerio-based HTML email parser:
 
-### Step 2 — Generate the parser file
+1. FROM address — full sender address
+2. SUBJECT line — exact text
+3. Order ID — the label text near it (e.g. "Order #", "Order Number:"), the CSS class or element type of the container, and the regex pattern that would match it
+4. Order date — label text, element/class, and date format string (e.g. "January 5, 2026")
+5. Order total — label text, CSS class if any, and the price format
+6. Items — for each line item: CSS class names on the row/cell, how the product name appears (plain text, link, heading), how quantity appears, how price appears, image src pattern
+7. Cancellation signals — exact subject keywords or body phrases that indicate cancellation
+8. Any other structural patterns (cutoff markers like "Order total", repeated sections to skip, etc.)
+
+Report everything verbatim with exact CSS classes and text snippets from the HTML.
+```
+
+Wait for all sub-agents to complete before proceeding.
+
+### Step 2 — Synthesize analysis results
+
+From the sub-agent reports, consolidate:
+
+- **FROM domain substring** for IMAP routing (e.g. `costco.com`)
+- **Subject keywords** for order detection (e.g. `['order', 'confirmation']`)
+- **Cancellation signals** (subject keywords + body phrases)
+- **Order ID**: best regex + element selector
+- **Date**: best selector + format
+- **Total**: best selector
+- **Item extraction strategies** ranked from most specific to least specific CSS class → link pattern → generic row → image heuristic
+
+### Step 3 — Generate the parser file
 
 Create `electron/parsers/[retailer-lowercase].ts` following this exact structure:
 
@@ -145,7 +167,7 @@ export async function parse[Retailer]Email(
 - `status` must be `'placed' | 'cancelled'` (lowercase)
 - `retailer` string must match exactly what you put in `SUPPORTED_RETAILERS` in App.tsx
 
-### Step 3 — Update `electron/imap.ts`
+### Step 4 — Update `electron/imap.ts`
 
 **3a. Add import** at the top (keep sorted with existing imports):
 ```typescript
@@ -171,7 +193,7 @@ The routing checks `preParsed.from.includes(...)`. Add BEFORE the fallback:
 
 Where `[retailer-domain-substring]` is the lowercase domain string from the FROM address in the sample emails (e.g. `costco.com`, `samsclub.com`).
 
-### Step 4 — Update `src/App.tsx`
+### Step 5 — Update `src/App.tsx`
 
 Find `SUPPORTED_RETAILERS` and add the new retailer:
 ```typescript
@@ -190,7 +212,7 @@ const RETAILER_LOGOS: Record<Retailer, string> = {
 **Note:** If the logo file does not exist yet, inform the user:
 > "You'll need to add a logo file at `public/logos/[retailer].[ext]`"
 
-### Step 5 — Report what's done
+### Step 6 — Report what's done
 
 After all file edits, output a summary:
 ```
