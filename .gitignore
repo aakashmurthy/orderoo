@@ -1,0 +1,31 @@
+node_modules
+dist
+dist-electron
+release
+email-examples
+*.local
+.DS_Store
+
+# Environment variables (may contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Database / runtime data (user data, secrets)
+storage.db
+storage.json
+db.json
+encryption.key
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Local Claude Code settings
+.claude/settings.local.json

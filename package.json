@@ -1,0 +1,86 @@
+{
+  "name": "orderoo",
+  "private": true,
+  "version": "0.5.2",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:local": "tsc && vite build",
+    "build:dir": "tsc && vite build && electron-builder --dir",
+    "preview": "vite preview",
+    "icons": "node scripts/generate-icons.js",
+    "release:patch": "npm version patch && git push origin main --follow-tags",
+    "release:minor": "npm version minor && git push origin main --follow-tags",
+    "release:major": "npm version major && git push origin main --follow-tags"
+  },
+  "build": {
+    "appId": "com.orderoo.app",
+    "productName": "Orderoo",
+    "icon": "build/icons/icon",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icons/icon.ico",
+      "verifyUpdateCodeSignature": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": "universal"
+        }
+      ],
+      "icon": "build/icons/icon.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "icon": "build/icons"
+    },
+    "directories": {
+      "output": "release"
+    }
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2",
+    "dompurify": "^3.3.1",
+    "electron-log": "^5.4.3",
+    "imap-simple": "^5.1.0",
+    "lowdb": "^7.0.1",
+    "mailparser": "^3.6.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "win-ca": "^3.5.1"
+  },
+  "overrides": {
+    "utf7": {
+      "semver": "^7.6.0"
+    }
+  },
+  "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/imap-simple": "^4.2.8",
+    "@types/mailparser": "^3.4.4",
+    "@types/node": "^20.11.24",
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.22",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "png-to-ico": "^3.0.1",
+    "postcss": "^8.5.6",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  }
+}
