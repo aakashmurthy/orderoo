@@ -105,20 +105,12 @@ electron/
 │   └── index.ts              # Shared TypeScript definitions
 ├── services/
 │   ├── database.service.ts   # Database abstraction layer
-│   ├── scraper.service.ts    # Email scraping orchestration
-│   └── whop.service.ts       # License validation via backend proxy
+│   └── scraper.service.ts    # Email scraping orchestration
 ├── ipc/
 │   └── handlers.ts           # IPC handler registration & validation
 └── parsers/
     ├── walmart.ts            # Walmart email parsing strategies
     └── target.ts             # Target email parsing strategies
-
-orderoo-api/                   # Vercel serverless backend (separate deployment)
-├── api/
-│   └── validate-license.ts   # License validation endpoint (holds Whop API key)
-├── package.json
-├── vercel.json
-└── .env.example
 
 public/
 └── logos/                    # Retailer logos for UI filter buttons
@@ -155,14 +147,12 @@ src/
 | `electron/ipc/handlers.ts` | IPC handler registration with validation |
 | `electron/services/database.service.ts` | Database operations (plain JSON storage) |
 | `electron/services/scraper.service.ts` | Email scraping orchestration |
-| `electron/services/whop.service.ts` | License validation via backend proxy |
 | `electron/imap.ts` | IMAP connection and email fetching (with timeouts) |
 | `electron/parsers/walmart.ts` | Walmart email parsing with fallback strategies |
 | `electron/parsers/target.ts` | Target email parsing with fallback strategies |
 | `src/App.tsx` | React dashboard with stats calculation and retailer filtering |
 | `public/logos/` | Retailer logo images for filter buttons |
 | `src/types.ts` | Renderer-side type exports |
-| `orderoo-api/api/validate-license.ts` | Vercel serverless function for license validation |
 
 ### Database
 
@@ -202,8 +192,7 @@ electronAPI.scrapeAll(dateFilter?: string): Promise<ScrapeResult[]>
 8. **Local Storage**: Data stored as plain JSON in the app directory
 9. **XSS Protection**: Email HTML sanitized with DOMPurify before rendering
 10. **IMAP Timeouts**: Connection (30s) and socket (60s) timeouts prevent hangs
-11. **Secure API Keys**: Whop API key stored on backend proxy, not in client
-12. **Connection Cleanup**: IMAP connections closed in `finally` blocks
+11. **Connection Cleanup**: IMAP connections closed in `finally` blocks
 
 See `SECURITY.md` for detailed security documentation.
 
@@ -384,41 +373,6 @@ const RETAILER_LOGOS: Record<Retailer, string> = {
 - **Deduplication**: Use a `Set` to track processed product names
 - **Debug Logging**: Use `[Retailer Parser]` prefix for console.log statements
 - **Filter Marketing**: Skip items appearing after "Order total" (usually recommendations)
-
-## License Validation Backend
-
-The app uses a Vercel serverless function to validate licenses securely. The Whop API key is stored on the server, not in the Electron app.
-
-### Deploying the Backend
-
-```bash
-cd orderoo-api
-npm install
-vercel login
-vercel --prod
-```
-
-### Environment Variables
-
-**Vercel (server-side)**:
-- `WHOP_API_KEY` - Your Whop API key (set in Vercel dashboard)
-
-**Electron app (.env)**:
-- `VALIDATION_API_URL` - URL to your deployed Vercel endpoint
-
-### Architecture
-
-```
-┌─────────────────┐        ┌─────────────────────┐        ┌─────────────┐
-│  Electron App   │──────▶ │  Vercel Function    │──────▶ │  Whop API   │
-│ (license + hwid)│        │ (holds API key)     │        │             │
-└─────────────────┘        └─────────────────────┘        └─────────────┘
-```
-
-The backend:
-- Validates license keys against Whop
-- Binds hardware IDs (HWID) to prevent license sharing
-- Implements server-side rate limiting
 
 ## Build & Distribution
 

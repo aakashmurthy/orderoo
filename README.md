@@ -1,6 +1,6 @@
 # Orderoo
 
-A desktop app that connects to your email and automatically tracks your online orders from retailers like Walmart and Target — all stored locally on your computer.
+A desktop app that connects to your email(s) via IMAP and automatically tracks your online orders from retailers like Walmart and Target via scraping order emails, all stored locally on your computer.
 
 ![Dashboard showing order stats](logo.png)
 
@@ -29,7 +29,7 @@ A desktop app that connects to your email and automatically tracks your online o
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/orderoo.git
+git clone https://github.com/aakashmurthy/orderoo.git
 cd orderoo
 
 # 2. Install dependencies
