@@ -110,7 +110,36 @@ This creates an installable `.exe` (Windows) in the `release/` folder.
 
 ## Adding Support for New Retailers
 
-See the [Adding New Retailers](CLAUDE.md#adding-new-retailers) section in CLAUDE.md for a step-by-step guide.
+Orderoo includes a `/scraper` skill for Claude Code that generates a complete retailer parser from sample emails.
+
+### Requirements
+
+- [Claude Code](https://claude.ai/code) installed
+- One or more sample `.eml` files from the retailer (order confirmation + cancellation)
+
+### Usage
+
+1. Save sample emails as `.eml` files into the `email-examples/` directory
+2. Open Claude Code in this project and run:
+
+```
+/scraper Add [Retailer] parser — order: email-examples/[retailer]-order.eml, cancel: email-examples/[retailer]-cancel.eml
+```
+
+Claude will generate:
+- `electron/parsers/[retailer].ts` — email parser with multi-strategy extraction
+- Updates to `electron/imap.ts` — routing and IMAP search filters
+- Updates to `src/App.tsx` — adds retailer to the dashboard filter UI
+
+You'll still need to manually add a logo image to `public/logos/[retailer].png`.
+
+### How to get `.eml` files
+
+- **Gmail**: Open the email → three-dot menu → *Download message*
+- **Apple Mail**: Drag the email to Finder, or File → Save As
+- **Outlook**: File → Save As → choose `.eml` or `.msg` format
+
+See [CLAUDE.md](CLAUDE.md#adding-new-retailers) for the full parser reference and best practices.
 
 ## Troubleshooting
 
