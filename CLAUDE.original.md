@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Agent Instructions
 
-**IMPORTANT**: For this Electron app, always use `electron-pro` agent (via Task tool with `subagent_type="electron-pro"`) for:
-- New features
-- Refactoring
-- Bug fixes
-- New IPC methods/services
-- Any changes to main process, renderer process, or preload scripts
+**IMPORTANT**: When working on this Electron application, always use the `electron-pro` agent (via the Task tool with `subagent_type="electron-pro"`) for:
+- Implementing new features
+- Refactoring existing code
+- Fixing bugs
+- Adding new IPC methods or services
+- Any modifications to the main process, renderer process, or preload scripts
 
-`electron-pro` specializes in secure, performant Electron+TypeScript apps; understands IPC patterns, process isolation, security best practices.
+The electron-pro agent specializes in building secure, performant Electron applications with TypeScript and understands IPC patterns, process isolation, and Electron security best practices.
 
 ## Commands
 
@@ -44,13 +44,13 @@ npm run dev
 
 ### Process Separation
 
-- **Main Process** (`electron/`): Node.js, full system access
+- **Main Process** (`electron/`): Node.js environment with full system access
   - Services layer for business logic
   - IPC handlers for renderer communication
   - Database management
 
 - **Renderer Process** (`src/`): Sandboxed React frontend
-  - No direct Node.js/Electron access
+  - No direct Node.js or Electron access
   - Communicates via typed `window.electronAPI`
 
 - **Preload** (`electron/preload.ts`): Secure IPC bridge
@@ -61,34 +61,34 @@ npm run dev
 ### Security Architecture
 
 ```
-┌─────────────────────────────────────────�
+┌─────────────────────────────────────────�
 │         Renderer Process (React)        │
-│  ┌─────────────────────────────────�   │
+│  ┌─────────────────────────────────�   │
 │  │   window.electronAPI (typed)    │   │
 │  └──────────────┬──────────────────┘   │
 └─────────────────┼──────────────────────┘
                   │ contextBridge
-┌─────────────────┼──────────────────────�
+┌─────────────────┼──────────────────────�
 │  Preload Script │                      │
-│  ┌──────────────▼──────────────────�   │
+│  ┌──────────────▼──────────────────�   │
 │  │  Limited, validated IPC calls   │   │
 │  └──────────────┬──────────────────┘   │
 └─────────────────┼──────────────────────┘
                   │ IPC Channels
-┌─────────────────▼──────────────────────�
+┌─────────────────▼──────────────────────�
 │         Main Process (Node.js)         │
-│  ┌─────────────────────────────────�   │
+│  ┌─────────────────────────────────�   │
 │  │      IPC Handler Registry       │   │
 │  │   (validation + error handling) │   │
 │  └──────────────┬──────────────────┘   │
 │                 │                       │
-│  ┌──────────────▼──────────────────�   │
+│  ┌──────────────▼──────────────────�   │
 │  │       Service Layer             │   │
 │  │  • Database Service             │   │
 │  │  • Scraper Service              │   │
 │  └──────────────┬──────────────────┘   │
 │                 │                       │
-│  ┌──────────────▼──────────────────�   │
+│  ┌──────────────▼──────────────────�   │
 │  │   Data Layer (Encrypted DB)     │   │
 │  └─────────────────────────────────┘   │
 └────────────────────────────────────────┘
@@ -128,10 +128,10 @@ src/
 ### Data Flow
 
 1. **User Action**: Frontend calls `window.electronAPI.scrapeAll(dateFilter)`
-2. **IPC Bridge**: Preload forwards to IPC channel `orders:scrape-all`
-3. **Validation**: IPC handler validates input
+2. **IPC Bridge**: Preload script forwards to IPC channel `orders:scrape-all`
+3. **Validation**: IPC handler validates input parameters
 4. **Service Layer**: Calls `scraperService.scrapeAllAccounts()`
-5. **Email Fetching**: `imap.ts` connects via IMAP
+5. **Email Fetching**: `imap.ts` connects to email servers via IMAP
 6. **Parsing**: `parsers/walmart.ts` extracts order data using cheerio
 7. **Database**: `databaseService.upsertOrders()` persists to `storage.json`
 8. **Response**: Returns results to renderer
@@ -141,16 +141,16 @@ src/
 
 | File | Purpose |
 |------|---------|
-| `electron/main.ts` | App lifecycle, window creation, security config |
-| `electron/preload.ts` | Secure API via contextBridge |
-| `electron/types/index.ts` | Centralized types and IPC channel names |
+| `electron/main.ts` | Application lifecycle, window creation, security configuration |
+| `electron/preload.ts` | Secure API exposure via contextBridge |
+| `electron/types/index.ts` | Centralized type definitions and IPC channel names |
 | `electron/ipc/handlers.ts` | IPC handler registration with validation |
-| `electron/services/database.service.ts` | Database ops (plain JSON) |
+| `electron/services/database.service.ts` | Database operations (plain JSON storage) |
 | `electron/services/scraper.service.ts` | Email scraping orchestration |
 | `electron/imap.ts` | IMAP connection and email fetching (with timeouts) |
 | `electron/parsers/walmart.ts` | Walmart email parsing with fallback strategies |
 | `electron/parsers/target.ts` | Target email parsing with fallback strategies |
-| `src/App.tsx` | React dashboard with stats and retailer filtering |
+| `src/App.tsx` | React dashboard with stats calculation and retailer filtering |
 | `public/logos/` | Retailer logo images for filter buttons |
 | `src/types.ts` | Renderer-side type exports |
 
@@ -166,7 +166,7 @@ src/
 
 ### IPC API (via window.electronAPI)
 
-All methods strongly typed and validated:
+All methods are strongly typed and validated:
 
 ```typescript
 // Account Management
@@ -182,14 +182,14 @@ electronAPI.scrapeAll(dateFilter?: string): Promise<ScrapeResult[]>
 
 ### Security Features
 
-1. **Context Isolation**: Enabled — renderer can't access Electron internals
-2. **Node Integration**: Disabled — renderer can't use Node.js APIs
+1. **Context Isolation**: Enabled - renderer cannot access Electron internals
+2. **Node Integration**: Disabled - renderer cannot use Node.js APIs
 3. **Limited API**: Only specific methods exposed via preload
 4. **Input Validation**: All IPC handlers validate parameters
-5. **Type Safety**: Full TypeScript with strict mode
+5. **Type Safety**: Full TypeScript coverage with strict mode
 6. **Navigation Protection**: Blocks external URL navigation
 7. **Window Security**: Prevents new window creation
-8. **Local Storage**: Plain JSON in app directory
+8. **Local Storage**: Data stored as plain JSON in the app directory
 9. **XSS Protection**: Email HTML sanitized with DOMPurify before rendering
 10. **IMAP Timeouts**: Connection (30s) and socket (60s) timeouts prevent hangs
 11. **Connection Cleanup**: IMAP connections closed in `finally` blocks
@@ -247,7 +247,10 @@ export const myService = new MyService()
 
 ### Error Handling
 
-All IPC handlers use `handleAsync` wrapper — catches exceptions, logs errors, propagates to renderer for UI handling:
+All IPC handlers use the `handleAsync` wrapper:
+- Catches exceptions
+- Logs errors
+- Propagates to renderer for UI handling
 
 ```typescript
 ipcMain.handle(channel, handleAsync(async (...args) => {
@@ -266,10 +269,10 @@ ipcMain.handle(channel, handleAsync(async (...args) => {
   4. Generic table rows with images
   5. Fallback image detection
 
-- **Order ID Normalization**: Non-numeric chars stripped to prevent duplicates
+- **Order ID Normalization**: Non-numeric characters stripped to prevent duplicates
 - **Cancellation Detection**: Checks subject/body for "cancel" keywords
 - **Price Inference**: Frontend infers missing prices when possible
-- **Deduplication**: Each product name processed once per email
+- **Deduplication**: Processes each product name only once per email
 
 ### Target Email Parser
 
@@ -285,11 +288,11 @@ ipcMain.handle(channel, handleAsync(async (...args) => {
 
 ## Adding New Retailers
 
-To add support for a new retailer (e.g., Costco):
+To add support for a new retailer (e.g., Costco), follow these steps:
 
 ### 1. Create the Email Parser
 
-Create `electron/parsers/[retailer].ts` following existing pattern:
+Create `electron/parsers/[retailer].ts` following the existing pattern:
 
 ```typescript
 import { simpleParser } from 'mailparser'
@@ -317,7 +320,7 @@ export async function parse[Retailer]Email(
 
 ### 2. Update IMAP Search
 
-In `electron/imap.ts`, add retailer to search list:
+In `electron/imap.ts`, add the retailer to the search list:
 
 ```typescript
 const retailers = ['walmart', 'target', '[retailer]']  // Add new retailer
@@ -325,7 +328,7 @@ const retailers = ['walmart', 'target', '[retailer]']  // Add new retailer
 
 ### 3. Add Parser Routing
 
-In `electron/imap.ts`, add routing for new parser:
+In `electron/imap.ts`, add routing logic for the new parser:
 
 ```typescript
 import { parse[Retailer]Email } from './parsers/[retailer]'
@@ -338,11 +341,11 @@ if (from.includes('[retailer]')) {
 
 ### 4. Add Logo
 
-Place logo in `public/logos/[retailer].png` (or `.webp`)
+Place the retailer logo in `public/logos/[retailer].png` (or `.webp`)
 
 ### 5. Update Frontend
 
-In `src/App.tsx`, add retailer to supported list:
+In `src/App.tsx`, add the retailer to the supported list:
 
 ```typescript
 const SUPPORTED_RETAILERS = ['Walmart', 'Target', '[Retailer]'] as const
@@ -359,17 +362,17 @@ const RETAILER_LOGOS: Record<Retailer, string> = {
 1. Place sample `.eml` files in `email-examples/` for reference
 2. Use gemini-cli to analyze large email files: `gemini "Analyze email-examples/[file].eml..." --yolo -o text`
 3. Test both confirmation and cancellation email formats
-4. Verify order ID, items, prices, quantities, and status extracted correctly
+4. Verify order ID, items, prices, quantities, and status are extracted correctly
 
 ### Parser Best Practices
 
-- **Multiple Strategies**: Implement fallbacks for different email formats
-- **Normalize Order IDs**: Strip non-numeric chars to prevent duplicates
+- **Multiple Strategies**: Implement fallback strategies for different email formats
+- **Normalize Order IDs**: Strip non-numeric characters to prevent duplicates
 - **Handle Missing Data**: Use "Unknown Product" fallback when items can't be extracted
-- **Cancellation Detection**: Check both subject and body
-- **Deduplication**: Use `Set` to track processed product names
-- **Debug Logging**: Use `[Retailer Parser]` prefix for console.log
-- **Filter Marketing**: Skip items after "Order total" (usually recommendations)
+- **Cancellation Detection**: Check both subject line and body content
+- **Deduplication**: Use a `Set` to track processed product names
+- **Debug Logging**: Use `[Retailer Parser]` prefix for console.log statements
+- **Filter Marketing**: Skip items appearing after "Order total" (usually recommendations)
 
 ## Build & Distribution
 
@@ -387,7 +390,7 @@ release/
 
 - **SECURITY.md**: Security architecture and best practices
 - **REFACTORING_NOTES.md**: Detailed refactoring changelog
-- **CLAUDE.md**: This file — project overview and guidelines
+- **CLAUDE.md**: This file - project overview and guidelines
 
 ## Troubleshooting
 
@@ -408,11 +411,11 @@ release/
 ## Testing Checklist
 
 - [ ] `npm run build` succeeds without errors
-- [ ] App starts in development mode
+- [ ] Application starts in development mode
 - [ ] Account CRUD operations function
 - [ ] Email scraping completes successfully
 - [ ] Orders display in dashboard
-- [ ] Stats calculations accurate
+- [ ] Stats calculations are accurate
 - [ ] Dark mode toggle works
 - [ ] No security warnings in DevTools console
 

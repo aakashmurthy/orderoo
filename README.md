@@ -1,29 +1,33 @@
-# Orderoo
+# Orderoo — Walmart & Target IMAP Order Scraper
 
-A desktop app that connects to your email(s) via IMAP and automatically tracks your online orders from retailers like Walmart and Target via scraping order emails, all stored locally on your computer.
+A desktop app that scrapes Walmart and Target order confirmation emails via IMAP and tracks your purchases locally. Connect any Gmail, iCloud, or custom IMAP email account — no cloud, no accounts, no subscriptions.
 
 ![Dashboard showing order stats](logo.png)
 
 ## What it does
 
-- Connects to your email via IMAP (works with Gmail, iCloud, and custom providers)
-- Scans for order confirmation emails from supported retailers
-- Extracts order details: items, quantities, prices, and status (placed / cancelled)
+- **IMAP order scraper** — connects to your email and scans for Walmart/Target order emails
+- Scrapes order confirmation emails from Walmart and Target (quantities, prices, items, status)
+- Detects cancelled orders automatically from cancellation emails
 - Shows a daily dashboard with stats: total orders, cancelled orders, stick rate, quantity, and spend
 - Stores everything in a plain `storage.json` file on your computer — no cloud, no accounts
 
 ## Supported Retailers
+
+Orderoo scrapes order emails from these retailers via IMAP:
 
 | Retailer | Order Confirmations | Cancellations |
 |----------|-------------------|---------------|
 | Walmart  | Yes               | Yes           |
 | Target   | Yes               | Yes           |
 
+More retailers can be added using the built-in `/scraper` skill (see below).
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18 or higher
 - [Git](https://git-scm.com/)
-- A Gmail or iCloud email account (or any IMAP-enabled account)
+- A Gmail or iCloud email account (or any IMAP-enabled email account) with Walmart or Target order emails in your inbox
 
 ## Installation
 
@@ -43,7 +47,7 @@ That's it. The app window will open automatically.
 
 ## Setting Up Your Email
 
-Orderoo uses **IMAP** to read your emails. You'll need to create an **App Password** — a special one-time password that lets the app connect without using your real password.
+Orderoo uses **IMAP** to read your emails and scrape Walmart/Target order confirmations. You'll need to create an **App Password** — a special one-time password that lets the app connect without using your real password.
 
 ### Gmail
 
