@@ -45,6 +45,21 @@ npm run dev
 
 That's it. The app window will open automatically.
 
+## Updating
+
+If you already have the repo cloned, update it with:
+
+```bash
+# 1. Fetch the latest remote changes
+git fetch origin
+
+# 2. Pull the latest commits into your local branch
+git pull origin main
+
+# 3. Reinstall dependencies if package versions changed
+npm install
+```
+
 ## Setting Up Your Email
 
 Orderoo uses **IMAP** to read your emails and scrape Walmart/Target order confirmations. You'll need to create an **App Password** — a special one-time password that lets the app connect without using your real password.
