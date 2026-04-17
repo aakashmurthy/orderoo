@@ -18,7 +18,8 @@ You will:
 3. Generate `electron/parsers/[retailer].ts`
 4. Update `electron/imap.ts` (FROM routing + subject patterns)
 5. Update `src/App.tsx` (SUPPORTED_RETAILERS, RETAILER_LOGOS)
-6. Report what logo file is still needed
+6. Test the parser with the provided `.eml` file(s)
+7. Report what logo file is still needed
 
 ---
 
@@ -212,7 +213,20 @@ const RETAILER_LOGOS: Record<Retailer, string> = {
 **Note:** If the logo file does not exist yet, inform the user:
 > "You'll need to add a logo file at `public/logos/[retailer].[ext]`"
 
-### Step 6 — Report what's done
+### Step 6 — Test the parser with the provided email file(s)
+
+After making code changes, validate the parser against every `.eml` path the user provided in the request.
+
+Use a direct parser test command or a dedicated parser-testing agent if one exists. Prefer a direct local test that invokes the parser on the sample email without launching the Electron app.
+
+Requirements:
+- If the user provided only one `.eml`, test against that one file.
+- If the user provided multiple `.eml` files, test against all of them.
+- Report the parsed output or the key extracted fields: order ID, status, date, total, and item count.
+- Do **not** recompile, rebuild, or rerun the app as part of this skill unless the user explicitly asks for that.
+- Do **not** run `npm run build`, `npm run dev`, or relaunch Electron as part of the default scraper workflow.
+
+### Step 7 — Report what's done
 
 After all file edits, output a summary:
 ```
@@ -284,15 +298,25 @@ function detectCancellation(subject: string, $: cheerio.CheerioAPI): boolean {
 
 ## Testing after creation
 
-After generating the parser, use the `email-parser-tester` agent to validate it:
-> "Test the [retailer] parser with email-examples/[file].eml"
+After generating or updating the parser, test it with the exact `.eml` file path(s) the user provided.
+
+Preferred approach:
+- Use a direct local parser invocation that exercises the parser on the sample email.
+- If an `email-parser-tester` agent exists, you may use it, but testing the provided `.eml` file(s) is mandatory either way.
 
 Verify:
 - [ ] Order ID is extracted and numeric
 - [ ] Items array is non-empty
 - [ ] Status is `'placed'` for confirmation, `'cancelled'` for cancellation
 - [ ] Date and total are populated (or 0/today as graceful fallback)
-- [ ] No TypeScript errors (`npm run build`)
+- [ ] The parser was tested against the provided sample email file(s)
+
+Do not:
+- [ ] Run `npm run build`
+- [ ] Recompile TypeScript
+- [ ] Rerun the Electron app
+
+Only do those if the user explicitly asks for them.
 
 ---
 
