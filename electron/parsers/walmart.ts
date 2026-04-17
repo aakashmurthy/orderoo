@@ -11,6 +11,12 @@ const MAX_ASPECT_RATIO = 2.0 // Maximum width/height ratio (excludes wide banner
 const MIN_DOM_DEPTH_FOR_HEURISTIC = 10 // Minimum parent depth to infer product image in "last resort" strategy
 const PLACEHOLDER_IMAGE = '/unknown-product.webp' // Fallback image for products without images
 
+function parsePrice(text: string): number {
+  const match = text.match(/\$(\d{1,3}(?:,\d{3})*\.\d{2})/)
+  if (!match) return 0
+  return parseFloat(match[1].replace(/,/g, ''))
+}
+
 /**
  * Parse a Walmart order confirmation email
  * @param input - Either raw email content (string) or pre-parsed email data (PreParsedEmail)
@@ -115,10 +121,7 @@ export async function parseWalmartEmail(input: string | PreParsedEmail): Promise
   if (orderTotalIndex !== -1) {
     // Look for price after "Order total"
     const textAfterTotal = fullHtml.substring(orderTotalIndex)
-    const priceMatch = textAfterTotal.match(/\$(\d{1,3}(?:,\d{3})*\.\d{2})/)
-    if (priceMatch) {
-      total = parseFloat(priceMatch[1].replace(/,/g, ''))
-    }
+    total = parsePrice(textAfterTotal)
   } else {
     // Fallback: look for Total in text
     const text = $.text()
@@ -127,6 +130,34 @@ export async function parseWalmartEmail(input: string | PreParsedEmail): Promise
       total = parseFloat(totalMatch[1])
     }
   }
+
+  // Cancellation emails sometimes omit "Order total" and only show the released hold amount
+  if (total === 0) {
+    $('[automation-id="payment-summary"], td, div, span').each((_i, el) => {
+      const text = $(el).text().replace(/\s+/g, ' ').trim()
+      if (!/temporary hold released|ending in \d{4}|released within \d+ business days/i.test(text)) return
+
+      const extractedPrice = parsePrice(text)
+      if (extractedPrice > 0) {
+        total = extractedPrice
+        return false
+      }
+    })
+  }
+
+  // 2b. Extract Order Date from body when present
+  let orderDate = date
+  $('div, td, span, p').each((_i, el) => {
+    const text = $(el).text().replace(/\s+/g, ' ').trim()
+    const dateMatch = text.match(/Order date:\s*([A-Za-z]{3},\s+[A-Za-z]{3}\s+\d{1,2},\s+\d{4})/i)
+    if (!dateMatch) return
+
+    const parsedOrderDate = new Date(dateMatch[1])
+    if (!isNaN(parsedOrderDate.getTime())) {
+      orderDate = parsedOrderDate
+      return false
+    }
+  })
 
   // 3. Extract Items
   const items: OrderItem[] = []
@@ -394,6 +425,23 @@ export async function parseWalmartEmail(input: string | PreParsedEmail): Promise
     })
   })
 
+  // This Walmart cancellation template can render repeated visible thumbnails plus an
+  // overflow counter like "+2" for additional cancelled units of the same item.
+  if (status === 'cancelled' && strategy === 'alt-pattern' && items.length === 1 && itemElements.length > 1) {
+    let overflowCount = 0
+
+    $('[class*="moreCountText"], [title*="items"]').each((_i, el) => {
+      const marker = [$(el).attr('title') || '', $(el).text()].join(' ')
+      const match = marker.match(/\+\s*(\d+)\s*items?/i)
+      if (match) {
+        overflowCount = parseInt(match[1], 10)
+        return false
+      }
+    })
+
+    items[0].quantity = itemElements.length + overflowCount
+  }
+
   // Post-processing: Fallback for price if 0
   // If we have only 1 item type and we know the total, assign the total to the item price
   if (items.length === 1 && items[0].price === 0 && total > 0) {
@@ -429,7 +477,7 @@ export async function parseWalmartEmail(input: string | PreParsedEmail): Promise
 
   return {
     id: orderId,
-    date: date.toISOString(),
+    date: orderDate.toISOString(),
     retailer: 'Walmart',
     items,
     total,

@@ -213,8 +213,9 @@ export async function scrapeAccount(
 
     // Define subject patterns per retailer
     const retailerSubjectPatterns: Record<string, string[]> = {
-      walmart: ['order', 'preorder'],
-      target: ['order']
+      // Include cancellation keywords so those emails are fetched and parsed too.
+      walmart: ['order', 'preorder', 'cancel', 'canceled', 'cancelled'],
+      target: ['order', 'cancel', 'canceled', 'cancelled']
     }
 
     // Use specific server-side queries to minimize data transfer
